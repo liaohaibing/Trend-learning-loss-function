@@ -1,5 +1,5 @@
 # Tre_Loss
-The source codes for Tre_Loss: Air quality prediction based on spatiotemporal graph neural network of multi granularity
+The source codes for Tre_Loss: Trend learning based loss function for time-series forecasting
 
 Datasets：
 Jinan database (JN)：
