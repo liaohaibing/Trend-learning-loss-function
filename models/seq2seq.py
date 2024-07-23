@@ -23,12 +23,14 @@ class DecoderRNN(nn.Module):
         super(DecoderRNN, self).__init__()      
         self.gru = nn.GRU(input_size=input_size, hidden_size=hidden_size, num_layers=num_grulstm_layers,batch_first=True)
         self.fc = nn.Linear(hidden_size, fc_units)
+        self.relu = nn.LeakyReLU()
         self.out = nn.Linear(fc_units, output_size)         
         
     def forward(self, input, hidden):
-        output, hidden = self.gru(input, hidden) 
-        output = F.relu( self.fc(output) )
-        output = self.out(output)      
+        output, hidden = self.gru(input, hidden)
+        output = self.relu(self.fc(output))
+        output = self.out(output)
+        output = self.relu(output)
         return output, hidden
     
 class Net_GRU(nn.Module):
