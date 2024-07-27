@@ -1,15 +1,28 @@
 import torch
 import numpy as np
 import numpy.fft as nf
+from scipy.spatial.distance import cdist
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def tre_loss(targets,outputs,alpha,device):
 	sq_error = w_mse(targets,outputs,device)
 	error1=torch.mean(sq_error)
-	d_error = torch.abs(derivatives(targets,device) - derivatives(outputs,device))
-	d_error=torch.tensor(d_error, dtype=torch.float32).to(device)
-	error2=torch.mean(d_error)
+	x1 = derivatives(targets, device)
+	x2 = derivatives(outputs, device)
+	# 求皮尔逊相关系数
+	corr = np.corrcoef(x1.cpu().detach().numpy().squeeze(), x2.cpu().detach().numpy().squeeze())
+	batch_size, lens = x1.shape[0:2]
+	p_corr = corr[0:batch_size, batch_size::]
+	p_corr=np.nan_to_num(p_corr)
+	w_corr = 1 - np.diag(p_corr, 0)
+	distance = cdist(targets.cpu().detach().numpy().squeeze(), outputs.cpu().detach().numpy().squeeze(), 'euclidean')
+	dd= np.diag(distance,0)
+	nd=dd/lens
+	d_error=w_corr*nd
+	#d_error = torch.abs(derivatives(targets,device) - derivatives(outputs,device))
+	d_error=np.mean(d_error)
+	error2=torch.tensor(d_error,dtype=torch.float32,requires_grad=True).to(device)
 	add_error = error1+alpha*error2
 	loss= add_error
 	return loss
